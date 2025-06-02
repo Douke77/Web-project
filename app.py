@@ -21,9 +21,19 @@ def init_db():
                 timestamp TEXT NOT NULL
             );
         ''')
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS images (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                announcement_id INTEGER NOT NULL,
+                filename TEXT NOT NULL,
+                is_cover INTEGER DEFAULT 0,
+                FOREIGN KEY (announcement_id) REFERENCES announcements (id)
+            );
+        ''')
         conn.commit()
         conn.close()
         print("✅ 資料庫已建立完成！")
+
 
 # 取得資料庫連線
 def get_db_connection():
@@ -52,8 +62,10 @@ def announcement_list():
 def announcement_detail(announcement_id):
     conn = get_db_connection()
     announcement = conn.execute('SELECT * FROM announcements WHERE id = ?', (announcement_id,)).fetchone()
+    images = conn.execute('SELECT * FROM images WHERE announcement_id = ?', (announcement_id,)).fetchall()
     conn.close()
-    return render_template('announcement_detail.html', announcement=announcement)
+    return render_template('announcement_detail.html', announcement=announcement, images=images)
+
 
 # 管理頁面
 @app.route('/admin')
@@ -70,6 +82,7 @@ def create():
         title = request.form['title']
         content = request.form['content']
         image = request.files['image']
+        images = request.files.getlist('images')  # 多圖
         timestamp = datetime.now().strftime('%Y-%m-%d')
 
         image_filename = None
@@ -80,8 +93,20 @@ def create():
             image_filename = filename
 
         conn = get_db_connection()
-        conn.execute('INSERT INTO announcements (title, content, image, timestamp) VALUES (?, ?, ?, ?)',
-                     (title, content, image_filename, timestamp))
+        cursor = conn.cursor()
+        cursor.execute('INSERT INTO announcements (title, content, image, timestamp) VALUES (?, ?, ?, ?)',
+                       (title, content, image_filename, timestamp))
+        announcement_id = cursor.lastrowid  # 新增後拿 ID
+
+        # 儲存多張圖片
+        for img in images:
+            if img and img.filename:
+                img_name = secure_filename(img.filename)
+                img_path = os.path.join(app.config['UPLOAD_FOLDER'], img_name)
+                img.save(img_path)
+                cursor.execute('INSERT INTO images (announcement_id, filename) VALUES (?, ?)',
+                               (announcement_id, img_name))
+
         conn.commit()
         conn.close()
         return redirect(url_for('admin'))
@@ -105,13 +130,13 @@ def edit(announcement_id):
     if request.method == 'POST':
         title = request.form['title']
         content = request.form['content']
-        image = request.files['image']
+        image = request.files.get('image')
+        images = request.files.getlist('images')
 
-        image_filename = announcement['image']  # 保留原本圖片
+        image_filename = None
         if image and image.filename:
             filename = secure_filename(image.filename)
-            image_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            image.save(image_path)
+            image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
             image_filename = filename
 
         conn.execute('UPDATE announcements SET title = ?, content = ?, image = ? WHERE id = ?',
@@ -122,6 +147,8 @@ def edit(announcement_id):
 
     conn.close()
     return render_template('edit.html', announcement=announcement)
+
+
 
 if __name__ == '__main__':
     if not os.path.exists('static/uploads'):

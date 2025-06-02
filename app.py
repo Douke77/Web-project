@@ -186,7 +186,7 @@ def delete(announcement_id: int):
 @app.route('/admin/edit/<int:announcement_id>', methods=['GET', 'POST'])
 def edit(announcement_id: int):
     """
-    編輯公告（支援更換封面圖，不支援多圖修改）。
+    編輯公告。
     """
     conn = get_db_connection()
     announcement = conn.execute(

@@ -16,5 +16,11 @@ Web-project/
 │
 └── README.md
 
-TinyMCE API:
-    6tm9p3kyf20alfyutw1q8qv7veectporocgrrpx0oamc6h08
+
+
+----啟動----
+cd /d "D:\Web-project"
+venv\Scripts\activate
+
+(env) code .
+(env) flask run

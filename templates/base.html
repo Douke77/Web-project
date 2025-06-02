@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <title>廟宇網站</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-light bg-light px-4">
+    <a class="navbar-brand" href="{{ url_for('index') }}">🏯 廟宇首頁</a>
+    <a class="nav-link" href="{{ url_for('announcement_list') }}">📢 公告</a>
+    <a class="nav-link" href="{{ url_for('admin') }}">🛠 管理</a>
+  </nav>
+  <div class="container mt-4">
+    {% block content %}{% endblock %}
+  </div>
+</body>
+</html>

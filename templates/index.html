@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>XXX廟宇</h1>
+<p>廟宇的介紹，創建年代、主祀神明、香火特色。</p>
+
+<h3> 廟宇資訊</h3>
+<ul>
+  <li>地址：XXX</li>
+  <li>聯絡方式：XXX</li>
+  <li>開放時間：XXX</li>
+</ul>
+
+<h3> 最新公告</h3>
+<ul class="list-group">
+  {% for ann in announcements %}
+    <li class="list-group-item">
+      <a href="{{ url_for('announcement_detail', announcement_id=ann.id) }}">{{ ann.title }}</a>
+      <small class="text-muted d-block">{{ ann.timestamp }}</small>
+    </li>
+  {% endfor %}
+</ul>
+{% endblock %}

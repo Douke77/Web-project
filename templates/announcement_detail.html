@@ -6,18 +6,30 @@
     {% if announcement.image %}
       <img src="{{ url_for('static', filename='uploads/' + announcement.image) }}" class="img-fluid mb-3">
     {% endif %}
-    <p>{{ announcement.content }}</p>
+    <p>{{ announcement.content.replace('\n', '<br>') | safe }}</p>
     <p><small class="text-muted">發布日期：{{ announcement.timestamp }}</small></p>
     <a href="{{ url_for('announcement_list') }}">← 回公告列表</a>
   </div>
 
-  <div class="col-md-4">
-    <h5 class="mb-3">相關圖片</h5>
+  {% if images %}
+    <div class="col-md-4">
+    <h5 class="mb-3">相關資訊</h5>
     {% for img in images %}
-      <img src="{{ url_for('static', filename='uploads/' + img.filename) }}"
-         style="width: 100%; height: 150px; object-fit: cover;"
-         class="mb-2 border rounded">
+      {% set ext = img.filename.split('.')[-1].lower() %}
+        <div class="mb-3">
+        {% if ext in ['mp4', 'webm', 'ogg'] %}
+          <video controls class="w-100 border rounded" style="height: 410px; object-fit: cover;">
+          <source src="{{ url_for('static', filename='uploads/' + img.filename) }}" type="video/{{ ext }}">
+          您的瀏覽器不支援影片播放。
+          </video>
+        {% else %}
+          <img src="{{ url_for('static', filename='uploads/' + img.filename) }}"
+              class="img-fluid border rounded"
+              style="height: 200px; object-fit: cover; width: 100%;">
+        {% endif %}
+        </div>
     {% endfor %}
+    </div>
+  {% endif %}
   </div>
-</div>
 {% endblock %}

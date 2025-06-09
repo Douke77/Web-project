@@ -22,5 +22,19 @@
     <input type="file" name="images" class="form-control" multiple>
   </div>
   <button type="submit" class="btn btn-primary">儲存修改</button>
+  {% if other_images %}
+    <div class="mb-3">
+      <label class="form-label">現有其他圖片</label><br>
+      {% for img in other_images %}
+        <div class="d-flex align-items-center mb-2" style="gap: 10px;">
+          <img src="{{ url_for('static', filename='uploads/' + img.filename) }}"
+            style="width: 150px; height: 100px; object-fit: cover;"
+            class="border rounded">
+          <a href="{{ url_for('delete_image', image_id=img.id, announcement_id=announcement.id) }}"
+            class="btn btn-sm btn-danger">刪除</a>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
 </form>
 {% endblock %}

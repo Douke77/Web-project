@@ -194,10 +194,17 @@ def edit(announcement_id: int):
         (announcement_id,)
     ).fetchone()
 
+    # 讀取目前所有附加圖片
+    other_images = conn.execute(
+        'SELECT * FROM images WHERE announcement_id = ?',
+        (announcement_id,)
+    ).fetchall()
+
     if request.method == 'POST':
         title: str = request.form['title']
         content: str = request.form['content']
         image = request.files.get('image')
+        new_images = request.files.getlist('images')
 
         image_filename: str = announcement['image']
         if image and image.filename:
@@ -210,6 +217,18 @@ def edit(announcement_id: int):
                 'UPDATE announcements SET title = ?, content = ?, image = ? WHERE id = ?',
                 (title, content, image_filename, announcement_id)
             )
+
+            # 新增新上傳的多張圖片
+            for img in new_images:
+                if img and img.filename:
+                    img_name = secure_filename(img.filename)
+                    img_path = os.path.join(app.config['UPLOAD_FOLDER'], img_name)
+                    img.save(img_path)
+                    conn.execute(
+                        'INSERT INTO images (announcement_id, filename) VALUES (?, ?)',
+                        (announcement_id, img_name)
+                    )
+
             conn.commit()
         except sqlite3.Error as e:
             print(f"更新失敗: {e}")
@@ -218,5 +237,25 @@ def edit(announcement_id: int):
         return redirect(url_for('admin'))
 
     conn.close()
-    return render_template('edit.html', announcement=announcement)
+    return render_template('edit.html', announcement=announcement, other_images=other_images)
 
+@app.route('/admin/delete-image/<int:image_id>/<int:announcement_id>')
+def delete_image(image_id: int, announcement_id: int):
+    """
+    刪除公告的一張附加圖片。
+    """
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        image = cursor.execute('SELECT filename FROM images WHERE id = ?', (image_id,)).fetchone()
+        if image:
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], image['filename'])
+            if os.path.exists(file_path):
+                os.remove(file_path)
+            cursor.execute('DELETE FROM images WHERE id = ?', (image_id,))
+            conn.commit()
+    except sqlite3.Error as e:
+        print(f"圖片刪除失敗: {e}")
+    finally:
+        conn.close()
+    return redirect(url_for('edit', announcement_id=announcement_id))
